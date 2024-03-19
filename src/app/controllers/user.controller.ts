@@ -1,12 +1,37 @@
 import {Request, Response} from "express";
 import Logger from '../../config/logger';
+import { rootUrl } from "../routes/base.routes";
+import * as schemas from '../resources/schemas.json';
+import {generateToken, verification} from "../resources/validation";
+import * as users from '../models/user.model';
+import {hash, compare} from "../services/passwords";
+import {authorisedGranted, getByEmail, getByToken, getById, edit} from "../models/user.model";
+
+// ============================== Function Declaration begins ==============================
 
 const register = async (req: Request, res: Response): Promise<void> => {
     try{
-        // Your code goes here
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
-        return;
+        Logger.http(`POST ${rootUrl}/users/register     Register a new User`);
+        const valid = await verification(schemas.user_register, req.body);
+        // Check if all user's input is valid.
+        if(valid !== true) {
+            Logger.error(`Invalid Information found! Response Status 400`);
+            res.statusMessage = `Bad Request. Invalid Information`;
+            res.status(400).send();
+            return;
+        }
+        // check if new user's email is already in use.
+        if(((await users.getByEmail(req.body.email)).length !== 0)){
+            Logger.warn("Email already in used. send status 403.")
+            res.status(403).send("Email already in use");
+            return;
+        }
+        const hashedPassword: string = await hash(req.body.password);
+        Logger.info("Send User info to model");
+        const result = await users.insert(req.body.firstName, req.body.lastName,
+                                                                req.body.email, hashedPassword);
+        res.status(201).send({"user_id": result.insertId});
+        Logger.info("Register success!!");
     } catch (err) {
         Logger.error(err);
         res.statusMessage = "Internal Server Error";
@@ -15,12 +40,40 @@ const register = async (req: Request, res: Response): Promise<void> => {
     }
 }
 
+// ------------------------------------------------------------------------------
+
 const login = async (req: Request, res: Response): Promise<void> => {
+    Logger.http(`POST ${rootUrl}/user/login`);
+    Logger.info("User is logging in");
     try{
-        // Your code goes here
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
-        return;
+        // Verify user's input values
+        const valid: any = await verification(schemas.user_login, req.body);
+        if (valid !== true) {
+            Logger.warn(`User (${req.body.email})'s validation is failed`);
+            res.statusMessage = "Bad Request. Invalid information.";
+            res.status(400).send();
+            return;
+        }
+        // Check user email is exist and return if it exists.
+        const searchedUser = await getByEmail(req.body.email);
+        if(searchedUser.length === 0) {
+            res.statusMessage = "UnAuthorized. Incorrect email/password";
+            res.status(401).send();
+            return;
+        }
+        // check user password is matched
+        const passwordMatched = await compare(req.body.password, searchedUser[0].password);
+        if (!passwordMatched) {
+            res.statusMessage = "UnAuthorized. Incorrect email/password";
+            res.status(401).send();
+            return;
+        }
+        const id = searchedUser[0].id;
+        // create token
+        const authToken = await generateToken();
+        // give auth_token to user
+        await authorisedGranted(req.body.email, authToken);
+        res.status(200).send({"userId": id, "token": authToken});
     } catch (err) {
         Logger.error(err);
         res.statusMessage = "Internal Server Error";
@@ -28,13 +81,25 @@ const login = async (req: Request, res: Response): Promise<void> => {
         return;
     }
 }
+
+// ------------------------------------------------------------------------------
 
 const logout = async (req: Request, res: Response): Promise<void> => {
     try{
         // Your code goes here
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
-        return;
+        Logger.http(`POST ${rootUrl}/users/logout`);
+        Logger.info("User is logging out.")
+        const token = req.get("X-Authorization");
+        const isExist = await getByToken(token);
+        if(!isExist) {
+            res.statusMessage = "Cannot log out if you are not authenticated";
+            res.status(401).send();
+            return;
+        }
+        Logger.debug("Log out process begins.");
+        // take auth_token from user
+        await authorisedGranted(null, token);
+        res.status(200).send();
     } catch (err) {
         Logger.error(err);
         res.statusMessage = "Internal Server Error";
@@ -42,13 +107,35 @@ const logout = async (req: Request, res: Response): Promise<void> => {
         return;
     }
 }
+
+// ------------------------------------------------------------------------------
 
 const view = async (req: Request, res: Response): Promise<void> => {
     try{
-        // Your code goes here
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
-        return;
+        Logger.http(`GET ${rootUrl}/users/:id`);
+        const id = parseInt(req.params.id, 10);
+        // check req.params.id is NaN
+        if(isNaN(id)) {
+            Logger.warn("Request parameter is not a number. Send status 400.");
+            res.statusMessage = "Bad Request. Id must be a number";
+            res.status(400).send();
+            return;
+        }
+        // Find user by id
+        const result: User[] = await getById(id);
+        if (result.length === 0) {
+            Logger.warn("No user Found. Send status 404.");
+            res.statusMessage = "No user with specified ID";
+            res.status(404).send();
+            return;
+        }
+        const token: string = req.get("X-Authorization");
+        const user: User = result[0];
+        const userToken: string = user.authToken;
+        // send user detail with status 200
+        res.status(200).send((token === userToken)
+                                        ? {"email": user.email, "firstName": user.firstName, "lastName": user.lastName}
+                                        : {"firstName": user.firstName, "lastName": user.lastName});
     } catch (err) {
         Logger.error(err);
         res.statusMessage = "Internal Server Error";
@@ -56,13 +143,51 @@ const view = async (req: Request, res: Response): Promise<void> => {
         return;
     }
 }
+
+// ------------------------------------------------------------------------------
 
 const update = async (req: Request, res: Response): Promise<void> => {
     try{
-        // Your code goes here
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
-        return;
+        Logger.http(`PATCH ${rootUrl}/users/:id`);
+        const id = parseInt(req.params.id, 10);
+        const token = req.get("X-Authorization");
+        // If id is not NaN get User by id or assign null
+        // If no user found undefined will be returned
+        const user = (!isNaN(id)) ? (await getById(id))[0] : null;
+        // check all validates.
+        if(await verification(schemas.user_edit, req.body) !== true || user === null) {
+            Logger.warn("Invalid information detected. Send status 400.");
+            res.statusMessage = "Bad request. Invalid information";
+            res.status(400).send();
+            return;
+        }else if (user === undefined) {
+            Logger.warn("User Not Found. Send status 404");
+            res.status(404).send();
+            return;
+        } else if(token === "" || !await compare(req.body.currentPassword, user.password)) {
+            Logger.warn("Authorize failure. Send status 401");
+            res.statusMessage = "Unauthorized or Invalid currentPassword";
+            res.status(401).send();
+            return;
+        }
+        const anotherUser = await getByEmail(req.body.email);
+        // collecting error message
+        let message: string = "";
+        if(token !== user.authToken) message += "- Can not edit another user's information\n";
+        if(anotherUser.length !== 0 && user.id !== anotherUser[0].id) message += "- Email is already in use\n";
+        if(req.body.password === req.body.currentPassword) message += "- Identical current and new passwords\n";
+        // send status
+        if (message !== "") {
+            Logger.warn("Forbidden case is found. Send status 403 with a message.");
+            res.status(403).send(message);
+        } else {
+            const email = (req.body.email === undefined || req.body.email === "") ? user.email : req.body.email;
+            const firstName = (req.body.firstName === "" || req.body.firstName === undefined) ? user.firstName : req.body.firstName;
+            const lastName = (req.body.lastName === "" || req.body.lastName === undefined) ? user.lastName : req.body.lastName;
+            const hashed = await hash(req.body.password);
+            await edit(id, email, firstName, lastName, hashed);
+            res.status(200).send();
+        }
     } catch (err) {
         Logger.error(err);
         res.statusMessage = "Internal Server Error";
@@ -71,4 +196,8 @@ const update = async (req: Request, res: Response): Promise<void> => {
     }
 }
 
+// ============================== Function Declaration Ends ==============================
+
 export {register, login, logout, view, update}
+
+// End of 'user.controller.ts'
