@@ -1,7 +1,7 @@
 type Petition = {
-    id : number;
+    petitionId : number;
     title : string;
-    categoryId : number;
+    categoryIds : number;
     ownerId : number;
     ownerFirstName : string;
     ownerLastName : string;
