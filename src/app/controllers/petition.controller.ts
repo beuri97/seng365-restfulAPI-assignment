@@ -1,9 +1,41 @@
 import {Request, Response} from "express";
 import Logger from '../../config/logger';
+import { getAllPetition } from '../models/petition.model'
+
+// ============================== Function Declaration begins ==============================
 
 const getAllPetitions = async (req: Request, res: Response): Promise<void> => {
     try{
-        // Your code goes here
+        // get startIndex
+        const from : number = req.query.startIndex === undefined ? 0 : parseInt(req.query.startIndex.toString(), 10);
+        // get count
+        const end : number = req.query.count === undefined ? null : parseInt(req.query.count.toString(), 10) + from + 1;
+        // get q
+        const searchQuery  = req.query.q === undefined ? null : req.query.q;
+        // get categoryIds
+        const categoryIds : number[] = req.query.categoryIds === undefined ? null
+                                                    : (req.query.categoryIds as string[])
+                                                        .map(item => parseInt(item, 10));
+        // get supportingCost
+        const supportingCost = req.query.supportingCost === undefined ? null
+                                                    : parseInt(req.query.supportingCost.toString(), 10);
+        // get ownerId
+        const ownerId = req.query.ownerId === undefined ? null : parseInt(req.query.ownerId.toString(), 10);
+        // get supporterId
+        const supporterId = req.query.supporterId === undefined ? null : parseInt(req.query.supporterId.toString(), 10);
+        // define valid sortBy value
+        const sortList = ["ALPHABETICAL_ASC", "ALPHABETICAL_DESC", "COST_ASC", "COST_DESC", "CREATED_ASC", "CREATED_DESC"];
+        // get sortBy value and check the value is valid
+        const sortBy = req.query.sortBy === undefined ? "CREATED_ASC"
+                                : sortList.includes(req.query.sortBy.toString()) ? req.query.sortBy.toString()
+                                : undefined;
+        // send Bad Request if any invalid query values found
+        if(isNaN(from) || isNaN(end) || isNaN(ownerId) || isNaN(supporterId)
+            || isNaN(supportingCost) || !sortBy || categoryIds.includes(NaN)) {
+            res.status(400).send();
+            return;
+        }
+        const result =
         res.statusMessage = "Not Implemented Yet!";
         res.status(501).send();
         return;
@@ -85,5 +117,7 @@ const getCategories = async(req: Request, res: Response): Promise<void> => {
         return;
     }
 }
+
+// ============================== Function Declaration Ends ==============================
 
 export {getAllPetitions, getPetition, addPetition, editPetition, deletePetition, getCategories};

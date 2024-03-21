@@ -26,6 +26,8 @@ const insert  = async (firstName: string,
     return rows;
 }
 
+// -----------------------------------------------------------------------------------------
+
 const getByEmail = async (email: string):Promise<User[]> => {
     Logger.info(`Getting a user whose email is ${email}.`);
     const query
@@ -36,6 +38,8 @@ const getByEmail = async (email: string):Promise<User[]> => {
     Logger.debug("DB connection is closed...");
     return rows;
 }
+
+// -----------------------------------------------------------------------------------------
 
 const getById = async (id: number):Promise<User[]> => {
     Logger.info(`Getting User by Id ${id}`);
@@ -51,6 +55,8 @@ const getById = async (id: number):Promise<User[]> => {
     return result;
 }
 
+// -----------------------------------------------------------------------------------------
+
 const getByToken = async (token: string):Promise<boolean> => {
     Logger.info("Execute getByToken function to get a user by Token");
     const query = "SELECT * FROM user WHERE auth_token = ?";
@@ -63,6 +69,8 @@ const getByToken = async (token: string):Promise<boolean> => {
     Logger.debug("DB connection is closed.");
     return (rows.length !== 0);
 }
+
+// -----------------------------------------------------------------------------------------
 
 const authorisedGranted = async (email: string, token: string)=> {
     Logger.info("Execute authorisedGranted function to grant a user a Auth_token");
@@ -80,6 +88,8 @@ const authorisedGranted = async (email: string, token: string)=> {
     conn.release();
     Logger.debug("DB connection is closed...");
 }
+
+// -----------------------------------------------------------------------------------------
 
 const edit = async (id:number, email: string, firstName: string, lastName: string, password: string): Promise<void> => {
     Logger.info("Execute edit function to update a user information");

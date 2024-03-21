@@ -5,7 +5,7 @@ import {retrieveImage, updateUserImage} from "../models/user.image.model";
 import * as path from "path";
 import * as fs from "fs";
 
-const rootPath = "storage/images/";
+const rootPath = "storage/default/";
 const getImage = async (req: Request, res: Response): Promise<void> => {
     try{
         const userId: number = parseInt(req.params.id, 10);
