@@ -1,6 +1,6 @@
 import {Request, Response} from "express";
 import Logger from '../../config/logger';
-import { getAllPetition } from '../models/petition.model'
+import { getAll } from '../models/petition.model'
 
 // ============================== Function Declaration begins ==============================
 
@@ -9,7 +9,7 @@ const getAllPetitions = async (req: Request, res: Response): Promise<void> => {
         // get startIndex
         const from : number = req.query.startIndex === undefined ? 0 : parseInt(req.query.startIndex.toString(), 10);
         // get count
-        const count : number = req.query.count === undefined ? null : parseInt(req.query.count.toString(), 10) + from + 1;
+        const count : number = req.query.count === undefined ? null : parseInt(req.query.count.toString(), 10);
         // get q
         const searchQuery  = req.query.q === undefined ? null : req.query.q.toString();
         // get categoryIds
@@ -35,11 +35,14 @@ const getAllPetitions = async (req: Request, res: Response): Promise<void> => {
             res.status(400).send();
             return;
         }
-        const result = await getAllPetition(from, count, searchQuery, categoryIds, supportingCost, ownerId, supporterId, sortBy);
+        const result = await getAll(searchQuery, categoryIds, supportingCost, ownerId, supporterId, sortBy);
+        const endIndex = from + count;
         const ids : number[] = [];
         for(const petition of result) ids.push(petition.petitionId);
         Logger.debug(`${ids}`);
-        res.status(200).send({"petitions": result[0], "count": result.length});
+        res.status(200).send(
+                            {"petitions": result.slice(from, (count === null) ? result.length : endIndex),
+                                "count": result.length});
     } catch (err) {
         Logger.error(err);
         res.statusMessage = "Internal Server Error";

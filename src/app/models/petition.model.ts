@@ -3,13 +3,12 @@ import {getPool} from "../../config/db";
 
 // ============================== Function Declaration begins ==============================
 
-const getAllPetition = async (startIndex : number, count : number, q : string,
-                              categoryIds : number[], supportingCost : number,
-                              ownerId : number, supporterId : number, sortBy : string) : Promise<Petition[]> => {
+const getAll = async (q : string, categoryIds : number[], supportingCost : number,
+                      ownerId : number, supporterId : number, sortBy : string) : Promise<Petition[]> => {
     Logger.info("Generating query. This is really long");
-    let query = "SELECT petition.id as petitionId, petition.title, petition.category_id as categoryIds, " +
+    let query = "SELECT petition.id as petitionId, petition.title, petition.category_id as categoryId, " +
                         "petition.owner_id as ownerId, user.first_name as ownerFirstName, user.last_name as ownerLastName, " +
-                        "petition.creation_date as creationDate, min(support_tier.cost) as supportingCost " +
+                        "total as numberOfSupporters, petition.creation_date as creationDate, min(support_tier.cost) as supportingCost " +
                         "FROM petition " +
                         "LEFT JOIN supporter on petition.owner_id = supporter.user_id AND supporter.petition_id = petition.id " +
                         "LEFT JOIN (SELECT supporter.petition_id, count(supporter.petition_id) as total FROM supporter GROUP BY supporter.petition_id) " +
@@ -21,7 +20,7 @@ const getAllPetition = async (startIndex : number, count : number, q : string,
         case null:
             break;
         default:
-            whereClause += `WHERE petition.title = ${q} OR petition.description = ${q} `;
+            whereClause += `WHERE petition.title LIKE \'%${q}%\' OR petition.description LIKE \'%${q}%\' `;
             break;
     }
     switch (categoryIds) {
@@ -29,7 +28,7 @@ const getAllPetition = async (startIndex : number, count : number, q : string,
             break;
         default:
             const ids = "(" + categoryIds.join(", ") + ") ";
-            whereClause += ((whereClause === "") ? "WHERE categoryIds IN " : "AND categoryIds IN ") + ids;
+            whereClause += ((whereClause === "") ? "WHERE categoryId IN " : "AND categoryId IN ") + ids;
             break;
     }
     switch (supportingCost) {
@@ -50,7 +49,7 @@ const getAllPetition = async (startIndex : number, count : number, q : string,
         case null:
             break;
         default:
-            whereClause += (whereClause === "") ? `WHERE supporterId = ${supporterId} ` : `AND supporterId = ${supporterId} `;
+            whereClause += (whereClause === "") ? `WHERE petition.support = ${supporterId} ` : `AND supporterId = ${supporterId} `;
     }
     let orderByClause = "ORDER BY ";
     switch (sortBy) {
@@ -85,7 +84,4 @@ const getAllPetition = async (startIndex : number, count : number, q : string,
     return result;
 }
 
-
-
-
-export { getAllPetition }
+export {getAll};
