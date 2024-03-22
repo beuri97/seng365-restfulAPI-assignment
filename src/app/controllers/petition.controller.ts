@@ -31,15 +31,13 @@ const getAllPetitions = async (req: Request, res: Response): Promise<void> => {
                                 : undefined;
         // send Bad Request if any invalid query values found
         if((from !== null && isNaN(from)) || (count !== null && isNaN(count)) || (ownerId !== null && isNaN(ownerId)) || (supporterId !== null && isNaN(supporterId))
-            || (supportingCost !== null && isNaN(supportingCost)) || !sortBy || (categoryIds !== null && categoryIds.includes(NaN))) {
+            || (supportingCost !== null && isNaN(supportingCost)) || !sortBy || (categoryIds !== null && categoryIds.includes(NaN))
+            || searchQuery === "") {
             res.status(400).send();
             return;
         }
         const result = await getAll(searchQuery, categoryIds, supportingCost, ownerId, supporterId, sortBy);
         const endIndex = from + count;
-        const ids : number[] = [];
-        for(const petition of result) ids.push(petition.petitionId);
-        Logger.debug(`${ids}`);
         res.status(200).send(
                             {"petitions": result.slice(from, (count === null) ? result.length : endIndex),
                                 "count": result.length});
