@@ -7,5 +7,7 @@ type Petition = {
     ownerLastName : string;
     numberOfSupporters : number;
     creationDate : string;
-    supportingCost: number
+    supportingCost: number;
+    moneyRaised : number
+    supportTiers : SupporterTier[] | string;
 }

@@ -1,6 +1,7 @@
 import {Request, Response} from "express";
 import Logger from '../../config/logger';
-import { getAll } from '../models/petition.model'
+import { getAll, getPetitionById, getAllCategories } from '../models/petitions.model'
+import { getTierByPetitionId } from "../models/petitions.supporter_tier.model";
 
 // ============================== Function Declaration begins ==============================
 
@@ -49,13 +50,24 @@ const getAllPetitions = async (req: Request, res: Response): Promise<void> => {
     }
 }
 
+// -----------------------------------------------------------------------------------------
 
 const getPetition = async (req: Request, res: Response): Promise<void> => {
     try{
-        // Your code goes here
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
-        return;
+        const petitionId : number = parseInt(req.params.id, 10);
+        if(isNaN(petitionId)) {
+            res.status(400).send();
+            return;
+        }
+        const petition : Petition = await getPetitionById(petitionId);
+        if (!petition) {
+            res.statusMessage = "No petition with id";
+            res.status(404).send();
+            return;
+        }
+        const supportTier : SupporterTier[] = await getTierByPetitionId(petitionId);
+        petition.supportTiers = supportTier.length !== 0 ? supportTier : "No Supporter Found";
+        res.status(200).send(petition);
     } catch (err) {
         Logger.error(err);
         res.statusMessage = "Internal Server Error";
@@ -66,6 +78,7 @@ const getPetition = async (req: Request, res: Response): Promise<void> => {
 
 const addPetition = async (req: Request, res: Response): Promise<void> => {
     try{
+        const isValid : boolean =
         // Your code goes here
         res.statusMessage = "Not Implemented Yet!";
         res.status(501).send();
@@ -108,10 +121,8 @@ const deletePetition = async (req: Request, res: Response): Promise<void> => {
 
 const getCategories = async(req: Request, res: Response): Promise<void> => {
     try{
-        // Your code goes here
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
-        return;
+        const result : Category[] = await getAllCategories();
+        res.status(200).send(result);
     } catch (err) {
         Logger.error(err);
         res.statusMessage = "Internal Server Error";

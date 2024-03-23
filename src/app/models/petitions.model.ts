@@ -5,6 +5,7 @@ import {getPool} from "../../config/db";
 
 const getAll = async (q : string, categoryIds : number[], supportingCost : number,
                       ownerId : number, supporterId : number, sortBy : string) : Promise<Petition[]> => {
+    Logger.info("Executing getAll function to get petitions.");
     Logger.info("Generating query. This is really long");
     let query = "SELECT petition.id as petitionId, petition.title, petition.description, petition.category_id as categoryId, " +
                         "petition.owner_id as ownerId, user.first_name as ownerFirstName, user.last_name as ownerLastName, " +
@@ -86,4 +87,40 @@ const getAll = async (q : string, categoryIds : number[], supportingCost : numbe
     return result;
 }
 
-export {getAll};
+// -----------------------------------------------------------------------------------------
+
+const getPetitionById = async (petitionId : number) : Promise<Petition> => {
+    Logger.info("Executing getPetitionById function to get petition by id");
+    const query : string  = "SELECT petition.id as petitionId, petition.title, petition.category_id as categoryId, " +
+                            "petition.owner_id as ownerId, user.first_name as ownerFirstName, user.last_name as ownerLastName, " +
+                            "total as numberOfSupporters, petition.creation_date as creationDate, petition.description, " +
+                            "sum(support_tier.cost) as moneyRaised " +
+                            "FROM petition " +
+                            "LEFT JOIN (SELECT supporter.petition_id, count(supporter.petition_id) as total FROM supporter GROUP BY supporter.petition_id) " +
+                            "as count_supporter on count_supporter.petition_id = petition.id " +
+                            "LEFT JOIN support_tier on support_tier.petition_id = petition.id  " +
+                            "LEFT JOIN user on user.id = petition.owner_id " +
+                            "WHERE petition.id = ? GROUP BY petition.id";
+    Logger.debug("Connecting to Database");
+    const db = await getPool().getConnection();
+    Logger.debug("Getting result");
+    const [ row ] = await db.query(query, [ petitionId ]);
+    Logger.debug("And Success!");
+    db.release();
+    Logger.debug("Database Connection is closed");
+    return row[0];
+}
+
+const getAllCategories = async() :Promise<Category[]> => {
+    Logger.info("Getting all categories");
+    const query : string = "SELECT id as categoryId, name FROM category ORDER BY categoryId";
+    Logger.debug("Connection to Database and get all tuples from category");
+    const db = await getPool().getConnection();
+    const [ rows ] = await db.query(query);
+    Logger.debug("SUCCESS!!!");
+    db.release();
+    Logger.debug("Database connection is closed");
+    return rows;
+}
+
+export { getAll, getPetitionById, getAllCategories };
