@@ -1,6 +1,8 @@
 import Logger from "../../config/logger";
 import {getPool} from "../../config/db";
 
+// ============================== Function Declaration begins ==============================
+
 const retrieveImage = async (id: number): Promise<User[]> => {
     Logger.info("Execute getImage function to get a user image");
     const query = "SELECT image_filename as imageFilename FROM user WHERE id = ?";
@@ -12,6 +14,7 @@ const retrieveImage = async (id: number): Promise<User[]> => {
     Logger.debug("DB connection is closed...");
     return result;
 }
+// -----------------------------------------------------------------------------------------
 
 const updateUserImage = async (id: number, file: string): Promise<void> => {
     Logger.info(`Executing updateUserImage function to update user ${id}'s image_filename`);
@@ -23,5 +26,8 @@ const updateUserImage = async (id: number, file: string): Promise<void> => {
     db.release();
     Logger.debug("DB connection is closed");
 }
+
+// ============================== Function Declaration Ends ==============================
+
 
 export { retrieveImage, updateUserImage }

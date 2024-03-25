@@ -1,5 +1,6 @@
 import Logger from "../../config/logger";
 import {getPool} from "../../config/db";
+import { ResultSetHeader } from "mysql2";
 
 // ============================== Function Declaration begins ==============================
 
@@ -111,6 +112,8 @@ const getPetitionById = async (petitionId : number) : Promise<Petition> => {
     return row[0];
 }
 
+// -----------------------------------------------------------------------------------------
+
 const getAllCategories = async() :Promise<Category[]> => {
     Logger.info("Getting all categories");
     const query : string = "SELECT id as categoryId, name FROM category ORDER BY categoryId";
@@ -123,4 +126,36 @@ const getAllCategories = async() :Promise<Category[]> => {
     return rows;
 }
 
-export { getAll, getPetitionById, getAllCategories };
+// -----------------------------------------------------------------------------------------
+
+const getPetitionByTitle = async (title : string) : Promise<Petition> => {
+    Logger.info("Getting petition using petition Title");
+    const query : string = "SELECT petition.id as petitionId, title, owner_id as ownerId, category_id as categoryId FROM petition WHERE title = ? ";
+    Logger.debug("Connecting to Database");
+    const db = await getPool().getConnection();
+    Logger.debug("Getting result");
+    const [ result ] = await db.query(query, [ title ]);
+    Logger.debug("And Success!");
+    db.release();
+    Logger.debug("Database connection is closed");
+    return result[0];
+}
+
+// -----------------------------------------------------------------------------------------
+
+const insertPetition = async (title : string, description : string, ownerId : number, categoryId : number) : Promise<ResultSetHeader> => {
+    Logger.info("Adding new petition into database");
+    const query = "INSERT INTO petition (title, description, creation_date, owner_id, category_id) VALUES(?, ?, NOW(), ?, ?)";
+    Logger.debug("Connecting to Database");
+    const db = await getPool().getConnection();
+    Logger.debug("Adding new petition");
+    const [ result ] = await db.query(query, [ title, description, ownerId, categoryId ]);
+    Logger.debug("Success!!");
+    db.release();
+    Logger.debug("Database connection is closed");
+    return result;
+}
+
+// ============================== Function Declaration Ends ==============================
+
+export { getAll, getPetitionById, getAllCategories, getPetitionByTitle, insertPetition };

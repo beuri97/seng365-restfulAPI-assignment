@@ -3,7 +3,6 @@ import {getPool} from "../../config/db";
 
 // ============================== Function Declaration begins ==============================
 
-
 const getTierByPetitionId = async (petitionId : number) : Promise<SupporterTier[]> => {
     Logger.info("Getting Support_tier using petitionId");
     const query = "SELECT title, description, cost, id as supportTierId FROM support_tier WHERE support_tier.petition_id = ? GROUP BY supportTierId";
@@ -17,6 +16,20 @@ const getTierByPetitionId = async (petitionId : number) : Promise<SupporterTier[
     return rows;
 }
 
+const insertSupportTiers = async (tiers : SupporterTier[], petitionId : number) : Promise<void> => {
+    Logger.info("Adding support tiers into database");
+    const query : string = "INSERT INTO support_tier (petition_id, title, description, cost) VALUES (?, ?, ?, ? )";
+    Logger.debug("Connecting Database");
+    const db = await getPool().getConnection();
+    Logger.debug(`Found ${tiers.length} support tier(s). Adding all support tier(s) into database`);
+    for(const tier of tiers) {
+        await db.query(query, [ petitionId, tier.title, tier.description, tier.cost ]);
+    }
+    Logger.debug("Success!");
+    db.release();
+    Logger.debug("DB connection closed");
+}
+
 // ============================== Function Declaration Ends ==============================
 
-export { getTierByPetitionId };
+export { getTierByPetitionId, insertSupportTiers };

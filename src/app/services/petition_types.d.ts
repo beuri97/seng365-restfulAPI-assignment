@@ -9,5 +9,5 @@ type Petition = {
     creationDate : string;
     supportingCost: number;
     moneyRaised : number
-    supportTiers : SupporterTier[] | string;
+    supportTiers : SupporterTier[];
 }

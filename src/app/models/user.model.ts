@@ -57,7 +57,7 @@ const getById = async (id: number):Promise<User[]> => {
 
 // -----------------------------------------------------------------------------------------
 
-const getByToken = async (token: string):Promise<boolean> => {
+const getByToken = async (token: string):Promise<number> => {
     Logger.info("Execute getByToken function to get a user by Token");
     const query = "SELECT * FROM user WHERE auth_token = ?";
     Logger.debug("Connecting to Database");
@@ -67,7 +67,7 @@ const getByToken = async (token: string):Promise<boolean> => {
                         : Logger.warn("No user found from database.");
     conn.release();
     Logger.debug("DB connection is closed.");
-    return (rows.length !== 0);
+    return (rows.length !== 0) ? rows[0].id : undefined;
 }
 
 // -----------------------------------------------------------------------------------------
