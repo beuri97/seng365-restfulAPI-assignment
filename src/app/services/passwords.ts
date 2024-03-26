@@ -6,8 +6,8 @@ const hash = async (password: string): Promise<string> => {
     return await bcrypt.hash(password, key);
 }
 
-const compare = async (password: string, comp: string): Promise<boolean> => {
-    return await bcrypt.compare(password, comp);
+const compare = async (password: string, hashed: string): Promise<boolean> => {
+    return await bcrypt.compareSync(password, hashed);
 }
 
 export {hash, compare}

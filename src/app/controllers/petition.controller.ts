@@ -19,6 +19,7 @@ const getAllPetitions = async (req: Request, res: Response): Promise<void> => {
         const searchQuery  = req.query.q === undefined ? null : req.query.q.toString();
         // get categoryIds
         const categoryIds : number[] = req.query.categoryIds === undefined ? null
+                                                    : (typeof req.query.categoryIds === 'string') ? [parseInt(req.query.categoryIds, 10)]
                                                     : (req.query.categoryIds as string[])
                                                         .map(item => parseInt(item, 10));
         // get supportingCost
@@ -99,7 +100,7 @@ const addPetition = async (req: Request, res: Response): Promise<void> => {
         const categoryNotExist = !categories.includes(req.body.categoryId);
         const tierTitleIsDuplicated = inputTierTitle.length !== new Set(inputTierTitle).size;
         if(isValid !== true || categoryNotExist || tierTitleIsDuplicated) {
-            res.statusMessage = "Bad Request\t";
+            res.statusMessage = "Bad Request. ";
             res.statusMessage += categoryNotExist ? "Category must reference an existing category."
                                                 : tierTitleIsDuplicated ? "Support tier title must be unique within those for the petition"
                                                 : isValid;

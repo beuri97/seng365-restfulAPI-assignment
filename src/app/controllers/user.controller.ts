@@ -153,29 +153,43 @@ const update = async (req: Request, res: Response): Promise<void> => {
         const token = req.get("X-Authorization");
         // If id is not NaN get User by id or assign null
         // If no user found undefined will be returned
-        const user = (!isNaN(id)) ? (await getById(id))[0] : null;
+        const user = (!isNaN(id)) ? (await getById(id))[0] : undefined;
         // check all validates.
-        if(await verification(schemas.user_edit, req.body) !== true || user === null) {
+
+        if(await verification(schemas.user_edit, req.body) !== true || isNaN(id) ||
+            (!req.body.currentPassword && req.body.password !== undefined) ||
+            (req.body.currentPassword !== undefined && !req.body.password)) {
             Logger.warn("Invalid information detected. Send status 400.");
             res.statusMessage = "Bad request. Invalid information";
             res.status(400).send();
             return;
-        }else if (user === undefined) {
+        }
+        if (user === undefined) {
             Logger.warn("User Not Found. Send status 404");
             res.status(404).send();
             return;
-        } else if(token === "" || !await compare(req.body.currentPassword, user.password)) {
+        }
+        if(token === "" || token !== user.authToken) {
             Logger.warn("Authorize failure. Send status 401");
-            res.statusMessage = "Unauthorized or Invalid currentPassword";
+            res.statusMessage = "Unauthorized";
+            res.status(401).send();
+            return;
+        }
+        const checkCurrentPassword = (req.body.currentPassword && req.body.password) ? await compare(req.body.currentPassword, user.password): true;
+        if (!checkCurrentPassword) {
+            res.statusMessage = "Invalid currentPassword";
             res.status(401).send();
             return;
         }
         const anotherUser = await getByEmail(req.body.email);
         // collecting error message
         let message: string = "";
-        if(token !== user.authToken) message += "- Can not edit another user's information\n";
-        if(anotherUser.length !== 0 && user.userId !== anotherUser[0].userId) message += "- Email is already in use\n";
-        if(req.body.password === req.body.currentPassword) message += "- Identical current and new passwords\n";
+        if(token !== user.authToken)
+            message += "- Can not edit another user's information\n";
+        if(anotherUser.length !== 0 && user.userId !== anotherUser[0].userId)
+            message += "- Email is already in use\n";
+        if(req.body.password === req.body.currentPassword && (req.body.password !== undefined && req.body.currentPassword !== undefined))
+            message += "- Identical current and new passwords\n";
         // send status
         if (message !== "") {
             Logger.warn("Forbidden case is found. Send status 403 with a message.");
@@ -184,7 +198,7 @@ const update = async (req: Request, res: Response): Promise<void> => {
             const email = (req.body.email === undefined || req.body.email === "") ? user.email : req.body.email;
             const firstName = (req.body.firstName === "" || req.body.firstName === undefined) ? user.firstName : req.body.firstName;
             const lastName = (req.body.lastName === "" || req.body.lastName === undefined) ? user.lastName : req.body.lastName;
-            const hashed = await hash(req.body.password);
+            const hashed = (req.body.password !== undefined && checkCurrentPassword) ? await hash(req.body.password) : user.password;
             await edit(id, email, firstName, lastName, hashed);
             res.status(200).send();
         }
