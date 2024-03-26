@@ -1,10 +1,11 @@
 import {Request, Response} from "express";
 import Logger from '../../config/logger';
-import {getAll, getAllCategories, getPetitionById, getPetitionByTitle, insertPetition} from '../models/petitions.model'
+import {getAll, getAllCategories, getPetitionById, getPetitionByTitle, insertPetition, removePetition, updatePetition} from '../models/petitions.model'
 import {getByToken} from '../models/user.model';
 import { getTierByPetitionId, insertSupportTiers } from "../models/petitions.supporter_tier.model";
 import {verification} from "../resources/validation";
 import * as schemas from "../resources/schemas.json";
+import {getSupportersByPetitionId} from "../models/petitions.supporters.model";
 
 // ============================== Function Declaration begins ==============================
 
@@ -90,66 +91,30 @@ const addPetition = async (req: Request, res: Response): Promise<void> => {
             return;
         }
         // get all categoryId as number
-        const categories : number[] = (await getAllCategories()).map((category: Category) => category.categoryId);
+        const categories : number[] = ((await getAllCategories()).map((category: Category) => category.categoryId));
         const isValid : any = await verification(schemas.petition_post, req.body);
-        if(isValid !== true || !categories.includes(req.body.categoryId)) {
-            res.statusMessage = !categories.includes(req.body.categoryId) ? "Category must reference an existing category." : isValid;
+        const inputSupportTier : SupporterTier[] = req.body.supportTiers;
+        const inputTierTitle : string[] = (!inputSupportTier || inputSupportTier.length === 0) ?
+                                            [] : (req.body.supportTiers).map((tier : SupporterTier) => tier.title);
+        const categoryNotExist = !categories.includes(req.body.categoryId);
+        const tierTitleIsDuplicated = inputTierTitle.length !== new Set(inputTierTitle).size;
+        if(isValid !== true || categoryNotExist || tierTitleIsDuplicated) {
+            res.statusMessage = "Bad Request\t";
+            res.statusMessage += categoryNotExist ? "Category must reference an existing category."
+                                                : tierTitleIsDuplicated ? "Support tier title must be unique within those for the petition"
+                                                : isValid;
             res.status(400).send();
             return;
         }
         // get petition
         const petition = await getPetitionByTitle(req.body.title);
-        // flag for filtering input supportTier
-        let filtered : boolean = false;
-        let tempTier : SupporterTier[] = req.body.supportTiers;
         if(petition !== undefined) {
-            if(petition.ownerId !== userId) {
-                res.status(403).send("Only the owner of a petition may change it");
-                return;
-            }
-            /*
-            check title is exist and array of input supporter tiers is subset of supporter tier array that is already exist in database
-            if true then we do not add or create into petition or support_tier table in our database. These are already exist
-             */
-            if(petition.title === req.body.title && tempTier.every(element => petition.supportTiers.includes(element))) {
-                res.status(403).send("Petition title already exists.");
-                return;
-            }
-            // check duplicated support tier and omit them.
-            if(tempTier.filter(element => petition.supportTiers.includes(element)).length !== 0) {
-                filtered = true;
-                tempTier = tempTier.filter(element => !petition.supportTiers.includes(element));
-            }
-            if(petition.supportTiers.length + tempTier.length > 3) {
-                res.statusMessage = "The Petition should have 3 support tiers at most";
-                res.status(400).send();
-                return;
-            }
-            // get all support tier titles petition has.
-            const supportTierTitle : string[] = (await getTierByPetitionId(petition.petitionId)).map((supportTier : SupporterTier) => supportTier.title);
-            for (const tier of petition.supportTiers) {
-                if(supportTierTitle.includes(tier.title)) {
-                    res.statusMessage = "Supporter tier title must be unique within those for the petition";
-                    res.status(400).send();
-                    return;
-                }
-            }
+            res.status(403).send("Petition title already exists.");
+            return;
         }
-        // if (req.body.supportTiers.length > 3 || req.body.supportTiers.length < 1) {
-        //     res.statusMessage = "A Petition must have between 1 and 3 support tiers (inclusive)";
-        //     res.status(400).send();
-        //     return;
-        // }
-        let newPetitionId : number = null;
-        if(petition === undefined) {
-            newPetitionId = (await insertPetition(req.body.title, req.body.description, userId, req.body.categoryId)).insertId;
-        }
-        const petitionId = (petition !== undefined) ? petition.petitionId : newPetitionId;
-        await insertSupportTiers(tempTier, petitionId);
-        if (filtered) {
-            res.statusMessage = "Created     NOTE:Duplicate support tier is omitted"
-        }
-        res.status(201).send({"petitionId": petitionId});
+        const petitionId = (await insertPetition(req.body.title, req.body.description, userId, req.body.categoryId)).insertId;
+        await insertSupportTiers(req.body.supportTiers, petitionId);
+        res.status(201).send({"petitionId" : petitionId});
     } catch (err) {
         Logger.error(err);
         res.statusMessage = "Internal Server Error";
@@ -158,12 +123,45 @@ const addPetition = async (req: Request, res: Response): Promise<void> => {
     }
 }
 
+// -----------------------------------------------------------------------------------------
+
 const editPetition = async (req: Request, res: Response): Promise<void> => {
     try{
-        // Your code goes here
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
-        return;
+        const token = req.get("X-Authorization");
+        const userId = (token !== undefined) ? await getByToken(token) : undefined;
+        if (!userId) {
+            res.status(401).send();
+            return;
+        }
+        const isValid = await verification(schemas.petition_patch, req.body);
+        const categories : number[] = (await getAllCategories()).map((category: Category) => category.categoryId);
+        const petitionId = parseInt(req.params.id, 10);
+        const categoryIdNotValid = req.body.categoryId !== undefined ? !categories.includes(parseInt(req.body.categoryId, 10)) : false;
+        if(isValid !== true || categoryIdNotValid || isNaN(petitionId)) {
+            res.statusMessage = "Bad Request. Invalid Information";
+            res.status(400).send();
+            return;
+        }
+        const petition = await getPetitionById(petitionId);
+        if (!petition) {
+            res.statusMessage = "Not Found. No petition found with id";
+            res.status(404).send();
+            return;
+        }
+        const titleIsExist = await getPetitionByTitle(req.body.title);
+        if (userId !== petition.ownerId || (titleIsExist && petition.petitionId !== petitionId)) {
+            res.statusMessage = "Forbidden. ";
+            if (userId !== petition.ownerId) res.statusMessage += " Only the owner of a petition may change it";
+            else if (titleIsExist) res.statusMessage += "Petition title already exists";
+            res.status(403).send();
+            return;
+        }
+        const input = req.body;
+        const title = input.title !== undefined ? input.title : petition.title;
+        const description = input.description !== undefined ? input.description : petition.description;
+        const categoryId = input.categoryId !== undefined ? input.categoryId : petition.categoryId;
+        await updatePetition(petitionId, title, description, categoryId);
+        res.status(200).send();
     } catch (err) {
         Logger.error(err);
         res.statusMessage = "Internal Server Error";
@@ -174,11 +172,31 @@ const editPetition = async (req: Request, res: Response): Promise<void> => {
 
 const deletePetition = async (req: Request, res: Response): Promise<void> => {
     try{
-        // Your code goes here
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
-        return;
-    } catch (err) {
+        const token = req.get("X-Authorization");
+        const userId = (token !== undefined) ? await getByToken(token) : undefined;
+        if(!userId) {
+            res.status(401).send();
+            return;
+        }
+        const petitionId = parseInt(req.params.id, 10);
+        const petition = !isNaN(petitionId) ? await getPetitionById(petitionId) : undefined;
+        if(!petition) {
+            res.statusMessage = "Not Found. No petition found with id";
+            res.status(404).send();
+            return;
+        }
+        const supporter = await getSupportersByPetitionId(petitionId);
+        if (userId !== petition.ownerId || supporter.length !== 0) {
+            let message = "";
+            if (userId !== petition.ownerId) message += "- Only the owner of a petition may delete it";
+            // Hide information about support tier to user who is not the petition's owner
+            else if (supporter.length !== 0) message += "- Can not delete a petition with one or more supporters";
+            res.status(403).send(message);
+            return;
+        }
+        await removePetition(petitionId);
+        res.status(200).send();
+        } catch (err) {
         Logger.error(err);
         res.statusMessage = "Internal Server Error";
         res.status(500).send();

@@ -31,7 +31,7 @@ const insert  = async (firstName: string,
 const getByEmail = async (email: string):Promise<User[]> => {
     Logger.info(`Getting a user whose email is ${email}.`);
     const query
-        = "SELECT first_name as firstName, last_name as lastName, auth_token as authToken, id, email, password FROM user WHERE email = ?";
+        = "SELECT first_name as firstName, last_name as lastName, auth_token as authToken, id as userId, email, password FROM user WHERE email = ?";
     const conn = await getPool().getConnection();
     const [ rows ] = await conn.query(query, [ email ]);
     conn.release();
@@ -44,7 +44,7 @@ const getByEmail = async (email: string):Promise<User[]> => {
 const getById = async (id: number):Promise<User[]> => {
     Logger.info(`Getting User by Id ${id}`);
     const query
-        = "SELECT first_name as firstName, last_name as lastName, auth_token as authToken, image_filename as imageFilename, id, email, password  FROM user WHERE id = ? ";
+        = "SELECT first_name as firstName, last_name as lastName, auth_token as authToken, image_filename as imageFilename, id as userId, email, password  FROM user WHERE id = ? ";
     Logger.debug(`Connecting to Database and find user id ${id}`);
     const conn = await getPool().getConnection();
     const [ result ] = await conn.query(query, [ id ]);

@@ -156,6 +156,31 @@ const insertPetition = async (title : string, description : string, ownerId : nu
     return result;
 }
 
+// ---------------------------------------------------------------------------------------
+
+const removePetition = async (petitionId : number) : Promise<void> => {
+    Logger.info(`Removing a petition that id is ${petitionId}`);
+    const query : string = "DELETE FROM petition WHERE petition.id = ? ";
+    Logger.debug("Connecting to Database");
+    const db = await getPool().getConnection();
+    Logger.debug(`removing petition where id is ${petitionId}`);
+    await db.query(query, [ petitionId ]);
+    Logger.debug("Done");
+    db.release();
+    Logger.debug("Database Connection is closed");
+}
+
+const updatePetition = async (petitionId: number, title : string, description : string, categoryId : number) : Promise<void> => {
+    Logger.info(`Updating petition id: ${petitionId}'s details`);
+    const query :string = "UPDATE petition SET title = ?, description = ?, category_id = ? WHERE id = ? ";
+    Logger.debug("Connecting to Database")
+    const db = await getPool().getConnection();
+    await db.query(query, [ title, description, categoryId, petitionId ]);
+    Logger.debug("Success");
+    db.release();
+    Logger.debug("Database connection is closed");
+}
+
 // ============================== Function Declaration Ends ==============================
 
-export { getAll, getPetitionById, getAllCategories, getPetitionByTitle, insertPetition };
+export { getAll, getPetitionById, getAllCategories, getPetitionByTitle, insertPetition, removePetition, updatePetition };

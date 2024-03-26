@@ -30,7 +30,7 @@ const register = async (req: Request, res: Response): Promise<void> => {
         Logger.info("Send User info to model");
         const result = await users.insert(req.body.firstName, req.body.lastName,
                                                                 req.body.email, hashedPassword);
-        res.status(201).send({"user_id": result.insertId});
+        res.status(201).send({"userId": result.insertId});
         Logger.info("Register success!!");
     } catch (err) {
         Logger.error(err);
@@ -68,7 +68,7 @@ const login = async (req: Request, res: Response): Promise<void> => {
             res.status(401).send();
             return;
         }
-        const id = searchedUser[0].id;
+        const id = searchedUser[0].userId;
         // create token
         const authToken = await generateToken();
         // give auth_token to user
@@ -174,7 +174,7 @@ const update = async (req: Request, res: Response): Promise<void> => {
         // collecting error message
         let message: string = "";
         if(token !== user.authToken) message += "- Can not edit another user's information\n";
-        if(anotherUser.length !== 0 && user.id !== anotherUser[0].id) message += "- Email is already in use\n";
+        if(anotherUser.length !== 0 && user.userId !== anotherUser[0].userId) message += "- Email is already in use\n";
         if(req.body.password === req.body.currentPassword) message += "- Identical current and new passwords\n";
         // send status
         if (message !== "") {

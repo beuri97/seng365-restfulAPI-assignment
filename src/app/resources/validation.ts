@@ -3,10 +3,10 @@ import addFormats from "ajv-formats";
 import {v4 as uuidV4} from "uuid";
 
 const validation = new Ajv({removeAdditional: 'all', strict: false});
+validation.addFormat("integer", /^\d+$/);
 addFormats(validation);
 const verification = async (schema: object, data: any): Promise<any> => {
     try{
-
         const validator = validation.compile(schema);
         const valid: boolean = validator(data);
         if (!valid) return validation.errorsText(validator.errors);

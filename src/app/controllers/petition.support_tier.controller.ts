@@ -3,6 +3,7 @@ import Logger from "../../config/logger";
 
 const addSupportTier = async (req: Request, res: Response): Promise<void> => {
     try{
+        // req.body.categoryId
         // Your code goes here
         res.statusMessage = "Not Implemented Yet!";
         res.status(501).send();
