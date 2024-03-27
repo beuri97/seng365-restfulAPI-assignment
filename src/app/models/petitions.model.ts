@@ -94,12 +94,12 @@ const getPetitionById = async (petitionId : number) : Promise<Petition> => {
     Logger.info("Executing getPetitionById function to get petition by id");
     const query : string  = "SELECT petition.id as petitionId, petition.title, petition.category_id as categoryId, " +
                             "petition.owner_id as ownerId, user.first_name as ownerFirstName, user.last_name as ownerLastName, " +
-                            "total as numberOfSupporters, petition.creation_date as creationDate, petition.description, " +
-                            "sum(support_tier.cost) as moneyRaised " +
+                            "COALESCE(total, 0) as numberOfSupporters, petition.creation_date as creationDate, petition.description, COALESCE(CAST(raised as UNSIGNED), 0) as moneyRaised " +
                             "FROM petition " +
-                            "LEFT JOIN (SELECT supporter.petition_id, count(supporter.petition_id) as total FROM supporter GROUP BY supporter.petition_id) " +
+                            "LEFT JOIN (SELECT supporter.petition_id, supporter.support_tier_id, COUNT(supporter.petition_id) as total, " +
+                            "SUM(support_tier.cost) as raised FROM supporter, support_tier " +
+                            "WHERE supporter.support_tier_id = support_tier.id GROUP BY supporter.petition_id) " +
                             "as count_supporter on count_supporter.petition_id = petition.id " +
-                            "LEFT JOIN support_tier on support_tier.petition_id = petition.id  " +
                             "LEFT JOIN user on user.id = petition.owner_id " +
                             "WHERE petition.id = ? GROUP BY petition.id";
     Logger.debug("Connecting to Database");

@@ -10,5 +10,5 @@ type Petition = {
     description : string,
     supportingCost: number,
     moneyRaised : number,
-    supportTiers : SupporterTier[];
+    supportTiers : SupportTier[];
 }

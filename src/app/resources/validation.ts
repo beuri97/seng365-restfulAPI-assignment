@@ -1,6 +1,7 @@
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
 import {v4 as uuidV4} from "uuid";
+import {getByToken} from "../models/user.model";
 
 const validation = new Ajv({removeAdditional: 'all', strict: false});
 validation.addFormat("integer", /^\d+$/);

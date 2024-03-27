@@ -3,7 +3,7 @@ import {getPool} from "../../config/db";
 
 // ============================== Function Declaration begins ==============================
 
-const getTierByPetitionId = async (petitionId : number) : Promise<SupporterTier[]> => {
+const getTierByPetitionId = async (petitionId : number) : Promise<SupportTier[]> => {
     Logger.info("Getting Support_tier using petitionId");
     const query = "SELECT title, description, cost, id as supportTierId FROM support_tier WHERE support_tier.petition_id = ? GROUP BY supportTierId";
     Logger.debug("Connecting Database");
@@ -16,7 +16,7 @@ const getTierByPetitionId = async (petitionId : number) : Promise<SupporterTier[
     return rows;
 }
 
-const insertSupportTiers = async (tiers : SupporterTier[], petitionId : number) : Promise<void> => {
+const insertSupportTiers = async (tiers : SupportTier[], petitionId : number) : Promise<void> => {
     Logger.info("Adding support tiers into database");
     const query : string = "INSERT INTO support_tier (petition_id, title, description, cost) VALUES (?, ?, ?, ? )";
     Logger.debug("Connecting Database");
@@ -30,6 +30,18 @@ const insertSupportTiers = async (tiers : SupporterTier[], petitionId : number) 
     Logger.debug("DB connection closed");
 }
 
+const insertSupportTier = async (tier: SupportTier, petitionId :number) :Promise<void> => {
+    Logger.info("Adding support tiers into database");
+    const query : string = "INSERT INTO support_tier (petition_id, title, description, cost) VALUES (?, ?, ?, ? )";
+    Logger.debug("Connecting Database");
+    const db = await getPool().getConnection();
+    Logger.debug(`Adding support tier into database`);
+    await db.query(query, [ petitionId, tier.title, tier.description, tier.cost ]);
+    Logger.debug("Success!");
+    db.release();
+    Logger.debug("DB connection closed");
+}
+
 // ============================== Function Declaration Ends ==============================
 
-export { getTierByPetitionId, insertSupportTiers };
+export { getTierByPetitionId, insertSupportTiers, insertSupportTier };

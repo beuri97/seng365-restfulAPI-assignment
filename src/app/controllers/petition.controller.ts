@@ -2,7 +2,7 @@ import {Request, Response} from "express";
 import Logger from '../../config/logger';
 import {getAll, getAllCategories, getPetitionById, getPetitionByTitle, insertPetition, removePetition, updatePetition} from '../models/petitions.model'
 import {getByToken} from '../models/user.model';
-import { getTierByPetitionId, insertSupportTiers } from "../models/petitions.supporter_tier.model";
+import { getTierByPetitionId, insertSupportTiers } from "../models/petitions.support_tier.model";
 import {verification} from "../resources/validation";
 import * as schemas from "../resources/schemas.json";
 import {getSupportersByPetitionId} from "../models/petitions.supporters.model";
@@ -94,9 +94,9 @@ const addPetition = async (req: Request, res: Response): Promise<void> => {
         // get all categoryId as number
         const categories : number[] = ((await getAllCategories()).map((category: Category) => category.categoryId));
         const isValid : any = await verification(schemas.petition_post, req.body);
-        const inputSupportTier : SupporterTier[] = req.body.supportTiers;
+        const inputSupportTier : SupportTier[] = req.body.supportTiers;
         const inputTierTitle : string[] = (!inputSupportTier || inputSupportTier.length === 0) ?
-                                            [] : (req.body.supportTiers).map((tier : SupporterTier) => tier.title);
+                                            [] : (req.body.supportTiers).map((tier : SupportTier) => tier.title);
         const categoryNotExist = !categories.includes(req.body.categoryId);
         const tierTitleIsDuplicated = inputTierTitle.length !== new Set(inputTierTitle).size;
         if(isValid !== true || categoryNotExist || tierTitleIsDuplicated) {
