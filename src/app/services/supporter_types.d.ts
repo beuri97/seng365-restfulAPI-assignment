@@ -1,8 +1,9 @@
 type Supporter = {
-    supporterId : number,
-    petitionId : number,
-    supportTierId : number,
-    userId : number,
-    message : string,
-    timestamp : string;
+    supportId :number,
+    supportTierId :number,
+    message :string,
+    supporterId :number,
+    supporterFirstName :string,
+    supporterLastName :string
+    timestamp :string;
 }

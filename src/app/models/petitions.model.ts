@@ -181,6 +181,19 @@ const updatePetition = async (petitionId: number, title : string, description : 
     Logger.debug("Database connection is closed");
 }
 
+// -----------------------------------------------------------------------------------------
+
+const isUserPetition = async (petitionId: number, userId : number) :Promise<boolean> => {
+    Logger.info("Checking the petition is users");
+    const query :string = "SELECT * FROM petition WHERE id = ? AND owner_id = ? ";
+    Logger.debug("Connnecting Database");
+    const db = await getPool().getConnection();
+    Logger.debug("Searching...");
+    const [ result ] = await db.query(query, [ petitionId, userId ]);
+    Logger.debug("Done");
+    return result.length !== 0;
+}
+
 // ============================== Function Declaration Ends ==============================
 
-export { getAll, getPetitionById, getAllCategories, getPetitionByTitle, insertPetition, removePetition, updatePetition };
+export { getAll, getPetitionById, getAllCategories, getPetitionByTitle, insertPetition, removePetition, updatePetition, isUserPetition };

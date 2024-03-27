@@ -16,32 +16,61 @@ const getTierByPetitionId = async (petitionId : number) : Promise<SupportTier[]>
     return rows;
 }
 
+// -----------------------------------------------------------------------------------------
+
 const insertSupportTiers = async (tiers : SupportTier[], petitionId : number) : Promise<void> => {
     Logger.info("Adding support tiers into database");
     const query : string = "INSERT INTO support_tier (petition_id, title, description, cost) VALUES (?, ?, ?, ? )";
     Logger.debug("Connecting Database");
     const db = await getPool().getConnection();
     Logger.debug(`Found ${tiers.length} support tier(s). Adding all support tier(s) into database`);
-    for(const tier of tiers) {
+    for(const tier of tiers)
         await db.query(query, [ petitionId, tier.title, tier.description, tier.cost ]);
-    }
     Logger.debug("Success!");
     db.release();
     Logger.debug("DB connection closed");
 }
 
+// -----------------------------------------------------------------------------------------
+
 const insertSupportTier = async (tier: SupportTier, petitionId :number) :Promise<void> => {
     Logger.info("Adding support tiers into database");
-    const query : string = "INSERT INTO support_tier (petition_id, title, description, cost) VALUES (?, ?, ?, ? )";
+    const query :string = "INSERT INTO support_tier (petition_id, title, description, cost) VALUES (?, ?, ?, ? )";
     Logger.debug("Connecting Database");
     const db = await getPool().getConnection();
     Logger.debug(`Adding support tier into database`);
     await db.query(query, [ petitionId, tier.title, tier.description, tier.cost ]);
     Logger.debug("Success!");
     db.release();
-    Logger.debug("DB connection closed");
+    Logger.debug("Database connection is closed");
+}
+
+const updateSupportTier = async (supportTier: SupportTier, supportTierId : number) :Promise<void> => {
+    Logger.info("Updating support tiers into database");
+    const query :string = "UPDATE support_tier SET title = ?, description = ?, cost = ? WHERE id = ? ";
+    Logger.debug("Connecting Database");
+    const db = await getPool().getConnection();
+    Logger.debug(`Updating supporter where id is ${supportTierId}`);
+    await db.query(query, [supportTier.title, supportTier.description, supportTier.cost, supportTierId]);
+    Logger.debug("Done");
+    db.release();
+    Logger.debug("Database connection is closed");
+}
+
+// -----------------------------------------------------------------------------------------
+
+const removeSupportTier = async (tierId :number):Promise<void> => {
+    Logger.info(`Removing a support tier where id is ${tierId}`);
+    const query :string = "DELETE FROM support_tier WHERE id = ? ";
+    Logger.debug("Connecting Database");
+    const db = await getPool().getConnection();
+    Logger.debug("Removing...");
+    await db.query(query, [ tierId ]);
+    Logger.debug("Done");
+    db.release();
+    Logger.debug("Database connection is closed");
 }
 
 // ============================== Function Declaration Ends ==============================
 
-export { getTierByPetitionId, insertSupportTiers, insertSupportTier };
+export { getTierByPetitionId, insertSupportTiers, insertSupportTier, updateSupportTier, removeSupportTier };
