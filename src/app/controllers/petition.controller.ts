@@ -35,10 +35,18 @@ const getAllPetitions = async (req: Request, res: Response): Promise<void> => {
         const sortBy = req.query.sortBy === undefined ? "CREATED_ASC"
                                 : sortList.includes(req.query.sortBy.toString()) ? req.query.sortBy.toString()
                                 : undefined;
+        let invalidCategory :boolean = false;
+        const categoires = (await getAllCategories()).map(category => category.categoryId);
+        if (categoryIds) {
+            for (const categoryId of categoryIds) {
+                if (!categoires.includes(categoryId))
+                    invalidCategory = true;
+            }
+        }
         // send Bad Request if any invalid query values found
         if((from !== null && isNaN(from)) || (count !== null && isNaN(count)) || (ownerId !== null && isNaN(ownerId)) || (supporterId !== null && isNaN(supporterId))
             || (supportingCost !== null && isNaN(supportingCost)) || !sortBy || (categoryIds !== null && categoryIds.includes(NaN))
-            || searchQuery === "") {
+            || searchQuery === "" || invalidCategory) {
             res.status(400).send();
             return;
         }
@@ -150,7 +158,7 @@ const editPetition = async (req: Request, res: Response): Promise<void> => {
             return;
         }
         const titleIsExist = await getPetitionByTitle(req.body.title);
-        if (userId !== petition.ownerId || (titleIsExist && petition.petitionId !== petitionId)) {
+        if (userId !== petition.ownerId || (titleIsExist)) {
             res.statusMessage = "Forbidden. ";
             if (userId !== petition.ownerId) res.statusMessage += " Only the owner of a petition may change it";
             else if (titleIsExist) res.statusMessage += "Petition title already exists";

@@ -157,8 +157,7 @@ const update = async (req: Request, res: Response): Promise<void> => {
         // check all validates.
 
         if(await verification(schemas.user_edit, req.body) !== true || isNaN(id) ||
-            (!req.body.currentPassword && req.body.password !== undefined) ||
-            (req.body.currentPassword !== undefined && !req.body.password)) {
+            (!req.body.currentPassword && req.body.password !== undefined)) {
             Logger.warn("Invalid information detected. Send status 400.");
             res.statusMessage = "Bad request. Invalid information";
             res.status(400).send();
@@ -183,17 +182,19 @@ const update = async (req: Request, res: Response): Promise<void> => {
         }
         const anotherUser = await getByEmail(req.body.email);
         // collecting error message
-        let message: string = "";
+        let message: string = null;
         if(token !== user.authToken)
-            message += "- Can not edit another user's information\n";
-        if(anotherUser.length !== 0 && user.userId !== anotherUser[0].userId)
-            message += "- Email is already in use\n";
-        if(req.body.password === req.body.currentPassword && (req.body.password !== undefined && req.body.currentPassword !== undefined))
-            message += "- Identical current and new passwords\n";
+            message = "Can not edit another user's information";
+        else if(anotherUser.length !== 0 && user.userId !== anotherUser[0].userId)
+            message = "Email is already in use";
+        else if(req.body.password === req.body.currentPassword && (req.body.password !== undefined && req.body.currentPassword !== undefined))
+            message = "Identical current and new passwords";
         // send status
-        if (message !== "") {
+        if (message !== null) {
             Logger.warn("Forbidden case is found. Send status 403 with a message.");
-            res.status(403).send(message);
+            res.statusMessage = "Forbidden. " + message;
+            res.status(403).send();
+            return;
         } else {
             const email = (req.body.email === undefined || req.body.email === "") ? user.email : req.body.email;
             const firstName = (req.body.firstName === "" || req.body.firstName === undefined) ? user.firstName : req.body.firstName;

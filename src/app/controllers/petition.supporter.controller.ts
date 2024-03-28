@@ -58,7 +58,7 @@ const addSupporter = async (req: Request, res: Response): Promise<void> => {
         }
         if (await isUserPetition(petitionId, userId))
             errorMessage = "Cannot support your own petition";
-        else if (supporters.find(tier => tier.supportId === req.body.supportTierId && tier.supporterId === userId)) {
+        else if (supporters.find(tier => tier.supportTierId === req.body.supportTierId && tier.supporterId === userId)) {
             errorMessage = "Already supported at this tier";
         }
         if (errorMessage !== null) {
