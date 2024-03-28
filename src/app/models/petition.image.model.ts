@@ -3,12 +3,12 @@ import {getPool} from "../../config/db";
 
 // ============================== Function Declaration begins ==============================
 
-const retrieveImage = async (id: number): Promise<User[]> => {
-    Logger.info("Execute getImage function to get a user image");
-    const query = "SELECT image_filename as imageFilename FROM user WHERE id = ?";
+const retrievePetitionImage = async (petitionId: number): Promise<Petition[]> => {
+    Logger.info("getting petition image");
+    const query = "SELECT image_filename as imageFileName FROM petition WHERE id = ?";
     Logger.debug("Connecting to Database");
     const db = await getPool().getConnection();
-    const [ result ] = await db.query(query, [ id ]);
+    const [ result ] = await db.query(query, [ petitionId ]);
     Logger.info("DB Run Success");
     db.release();
     Logger.debug("DB connection is closed...");
@@ -17,12 +17,12 @@ const retrieveImage = async (id: number): Promise<User[]> => {
 
 // -----------------------------------------------------------------------------------------
 
-const updateUserImage = async (id: number, file: string): Promise<void> => {
-    Logger.info(`Executing updateUserImage function to update user ${id}'s image_filename`);
-    const query: string = "UPDATE user SET image_filename = ? WHERE id = ? ";
+const updatePetitionImage = async (petitionId: number, file: string): Promise<void> => {
+    Logger.info(`Updating petition ${petitionId}'s image_filename`);
+    const query: string = "UPDATE petition SET image_filename = ? WHERE id = ? ";
     Logger.debug("Connecting to Database");
     const db = await getPool().getConnection();
-    await db.query(query, [ file, id ]);
+    await db.query(query, [ file, petitionId ]);
     Logger.info("... and Update success!!");
     db.release();
     Logger.debug("DB connection is closed");
@@ -30,5 +30,4 @@ const updateUserImage = async (id: number, file: string): Promise<void> => {
 
 // ============================== Function Declaration Ends ==============================
 
-
-export { retrieveImage, updateUserImage }
+export { retrievePetitionImage, updatePetitionImage };

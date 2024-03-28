@@ -94,7 +94,7 @@ const getPetitionById = async (petitionId : number) : Promise<Petition> => {
     Logger.info("Executing getPetitionById function to get petition by id");
     const query : string  = "SELECT petition.id as petitionId, petition.title, petition.category_id as categoryId, " +
                             "petition.owner_id as ownerId, user.first_name as ownerFirstName, user.last_name as ownerLastName, " +
-                            "COALESCE(total, 0) as numberOfSupporters, petition.creation_date as creationDate, petition.description, COALESCE(CAST(raised as UNSIGNED), 0) as moneyRaised " +
+                            "COALESCE(total, 0) as numberOfSupporters, petition.creation_date as creationDate, petition.description, CAST(COALESCE(raised, 0) as UNSIGNED) as moneyRaised " +
                             "FROM petition " +
                             "LEFT JOIN (SELECT supporter.petition_id, supporter.support_tier_id, COUNT(supporter.petition_id) as total, " +
                             "SUM(support_tier.cost) as raised FROM supporter, support_tier " +
@@ -186,7 +186,7 @@ const updatePetition = async (petitionId: number, title : string, description : 
 const isUserPetition = async (petitionId: number, userId : number) :Promise<boolean> => {
     Logger.info("Checking the petition is users");
     const query :string = "SELECT * FROM petition WHERE id = ? AND owner_id = ? ";
-    Logger.debug("Connnecting Database");
+    Logger.debug("Connecting Database");
     const db = await getPool().getConnection();
     Logger.debug("Searching...");
     const [ result ] = await db.query(query, [ petitionId, userId ]);
@@ -194,6 +194,19 @@ const isUserPetition = async (petitionId: number, userId : number) :Promise<bool
     return result.length !== 0;
 }
 
+// -----------------------------------------------------------------------------------------
+
+const getPetitionImage = async (petitionId :number) :Promise<string> => {
+    Logger.info("getting petition image");
+    const query :string = "SELECT image_filename as imageFileName FROM petition WHERE id = ? ";
+    Logger.debug("Connecting Database");
+    const db = await getPool().getConnection();
+    Logger.debug("Searching...");
+    const [ result ] = await db.query(query, [ petitionId ]);
+    Logger.debug("Done");
+    return result[0].imageFileName;
+}
+
 // ============================== Function Declaration Ends ==============================
 
-export { getAll, getPetitionById, getAllCategories, getPetitionByTitle, insertPetition, removePetition, updatePetition, isUserPetition };
+export { getAll, getPetitionById, getAllCategories, getPetitionByTitle, insertPetition, removePetition, updatePetition, isUserPetition, getPetitionImage };

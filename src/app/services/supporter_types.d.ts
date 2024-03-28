@@ -4,6 +4,6 @@ type Supporter = {
     message :string,
     supporterId :number,
     supporterFirstName :string,
-    supporterLastName :string
+    supporterLastName :string,
     timestamp :string;
 }
