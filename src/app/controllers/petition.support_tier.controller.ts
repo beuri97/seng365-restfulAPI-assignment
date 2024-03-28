@@ -12,6 +12,8 @@ import {
 import {getPetitionById} from "../models/petitions.model";
 import {supporterIsExist} from "../models/petitions.supporters.model";
 
+// ============================== Function Declaration begins ==============================
+
 const addSupportTier = async (req: Request, res: Response): Promise<void> => {
     try{
         const token = req.get("X-Authorization");
@@ -55,6 +57,8 @@ const addSupportTier = async (req: Request, res: Response): Promise<void> => {
         return;
     }
 }
+
+// ---------------------------------------------------------------------------------------
 
 const editSupportTier = async (req: Request, res: Response): Promise<void> => {
     try{
@@ -110,6 +114,8 @@ const editSupportTier = async (req: Request, res: Response): Promise<void> => {
     }
 }
 
+// ---------------------------------------------------------------------------------------
+
 const deleteSupportTier = async (req: Request, res: Response): Promise<void> => {
     try{
         const token :string = req.get("X-Authorization");
@@ -150,5 +156,7 @@ const deleteSupportTier = async (req: Request, res: Response): Promise<void> => 
         return;
     }
 }
+
+// ============================== Function Declaration Ends ==============================
 
 export {addSupportTier, editSupportTier, deleteSupportTier};

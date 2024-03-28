@@ -3,6 +3,8 @@ import addFormats from "ajv-formats";
 import {v4 as uuidV4} from "uuid";
 import fs from "fs";
 
+// ============================== Function Declaration begins ==============================
+
 const validation = new Ajv({removeAdditional: 'all', strict: false});
 validation.addFormat("integer", /^\d+$/);
 addFormats(validation);
@@ -17,9 +19,13 @@ const verification = async (schema: object, data: any): Promise<any> => {
     }
 }
 
+// -----------------------------------------------------------------------------------------
+
 const generateToken = async ():Promise<string> => {
     return uuidV4();
 }
+
+// -----------------------------------------------------------------------------------------
 
 const fileIsExist = (filePath: string) :boolean => {
     try {
@@ -33,6 +39,8 @@ const fileIsExist = (filePath: string) :boolean => {
         }
     }
 }
+
+// ============================== Function Declaration Ends ==============================
 
 export { verification, generateToken, fileIsExist };
 

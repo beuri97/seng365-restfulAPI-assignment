@@ -214,5 +214,3 @@ const update = async (req: Request, res: Response): Promise<void> => {
 // ============================== Function Declaration Ends ==============================
 
 export {register, login, logout, view, update}
-
-// End of 'user.controller.ts'

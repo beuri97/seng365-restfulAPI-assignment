@@ -7,6 +7,7 @@ import * as schemas from '../resources/schemas.json';
 import {verification} from "../resources/validation";
 import {getTierByPetitionId} from "../models/petitions.support_tier.model";
 
+// ============================== Function Declaration begins ==============================
 
 const getAllSupportersForPetition = async (req: Request, res: Response): Promise<void> => {
     try{
@@ -29,6 +30,8 @@ const getAllSupportersForPetition = async (req: Request, res: Response): Promise
         return;
     }
 }
+
+// ---------------------------------------------------------------------------------------
 
 const addSupporter = async (req: Request, res: Response): Promise<void> => {
     try{
@@ -75,5 +78,7 @@ const addSupporter = async (req: Request, res: Response): Promise<void> => {
         return;
     }
 }
+
+// ============================== Function Declaration Ends ==============================
 
 export {getAllSupportersForPetition, addSupporter}

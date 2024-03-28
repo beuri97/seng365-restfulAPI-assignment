@@ -170,6 +170,8 @@ const removePetition = async (petitionId : number) : Promise<void> => {
     Logger.debug("Database Connection is closed");
 }
 
+// ---------------------------------------------------------------------------------------
+
 const updatePetition = async (petitionId: number, title : string, description : string, categoryId : number) : Promise<void> => {
     Logger.info(`Updating petition id: ${petitionId}'s details`);
     const query :string = "UPDATE petition SET title = ?, description = ?, category_id = ? WHERE id = ? ";

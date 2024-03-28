@@ -179,6 +179,8 @@ const editPetition = async (req: Request, res: Response): Promise<void> => {
     }
 }
 
+// ---------------------------------------------------------------------------------------
+
 const deletePetition = async (req: Request, res: Response): Promise<void> => {
     try{
         const token = req.get("X-Authorization");

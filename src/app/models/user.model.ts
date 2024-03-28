@@ -4,13 +4,6 @@ import { ResultSetHeader } from "mysql2";
 
 // ============================== Function Declaration begins ==============================
 
-/**
- * Insert new user into database.
- * @param firstName user's first name.
- * @param lastName user's last name.
- * @param email user's email address.
- * @param password user's password.
- */
 const insert  = async (firstName: string,
                        lastName: string,
                        email: string,

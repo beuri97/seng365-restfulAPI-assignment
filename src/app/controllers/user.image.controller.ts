@@ -7,6 +7,9 @@ import * as fs from "fs";
 import {fileIsExist} from "../resources/validation";
 
 const rootPath = "storage/default/";
+
+// ============================== Function Declaration begins ==============================
+
 const getImage = async (req: Request, res: Response): Promise<void> => {
     try{
         const userId: number = parseInt(req.params.id, 10);
@@ -46,6 +49,8 @@ const getImage = async (req: Request, res: Response): Promise<void> => {
         return;
     }
 }
+
+// ---------------------------------------------------------------------------------------
 
 const setImage = async (req: Request, res: Response): Promise<void> => {
     try{
@@ -106,6 +111,8 @@ const setImage = async (req: Request, res: Response): Promise<void> => {
     }
 }
 
+// ---------------------------------------------------------------------------------------
+
 const deleteImage = async (req: Request, res: Response): Promise<void> => {
     try{
         const userId : number = parseInt(req.params.id, 10);
@@ -139,5 +146,7 @@ const deleteImage = async (req: Request, res: Response): Promise<void> => {
         return;
     }
 }
+
+// ============================== Function Declaration Ends ==============================
 
 export {getImage, setImage, deleteImage}

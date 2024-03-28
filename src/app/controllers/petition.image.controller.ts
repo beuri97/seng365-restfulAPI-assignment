@@ -9,6 +9,8 @@ import {fileIsExist} from "../resources/validation";
 
 const rootPath = "storage/default/";
 
+// ============================== Function Declaration begins ==============================
+
 const getImage = async (req: Request, res: Response): Promise<void> => {
     try{
         const petitionId: number = parseInt(req.params.id, 10);
@@ -47,6 +49,8 @@ const getImage = async (req: Request, res: Response): Promise<void> => {
         return;
     }
 }
+
+// ---------------------------------------------------------------------------------------
 
 const setImage = async (req: Request, res: Response): Promise<void> => {
     try{
@@ -108,5 +112,6 @@ const setImage = async (req: Request, res: Response): Promise<void> => {
     }
 }
 
+// ============================== Function Declaration Ends ==============================
 
 export {getImage, setImage};
