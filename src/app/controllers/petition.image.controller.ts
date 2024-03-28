@@ -1,11 +1,11 @@
 import {Request, Response} from "express";
 import Logger from "../../config/logger";
-import {retrieveImage, updateUserImage} from "../models/user.image.model";
 import path from "path";
 import {retrievePetitionImage, updatePetitionImage} from "../models/petition.image.model";
-import {getById, getByToken} from "../models/user.model";
+import {getByToken} from "../models/user.model";
 import fs from "fs";
-import {getPetitionById, getPetitionImage, isUserPetition} from "../models/petitions.model";
+import {getPetitionById, getPetitionImage} from "../models/petitions.model";
+import {fileIsExist} from "../resources/validation";
 
 const rootPath = "storage/default/";
 
@@ -20,7 +20,7 @@ const getImage = async (req: Request, res: Response): Promise<void> => {
             return;
         }
         const image = petition[0].imageFileName;
-        if(image === null) {
+        if(image === null || !fileIsExist(process.cwd() + '/' + rootPath+image)) {
             Logger.warn("sending status 404.");
             res.statusMessage = "Not Found. Petition has no image";
             res.status(404).send();

@@ -4,6 +4,7 @@ import {getById} from "../models/user.model";
 import {retrieveImage, updateUserImage} from "../models/user.image.model";
 import * as path from "path";
 import * as fs from "fs";
+import {fileIsExist} from "../resources/validation";
 
 const rootPath = "storage/default/";
 const getImage = async (req: Request, res: Response): Promise<void> => {
@@ -17,7 +18,8 @@ const getImage = async (req: Request, res: Response): Promise<void> => {
             return;
         }
         const image = user[0].imageFilename;
-        if(image === null) {
+        Logger.debug(process.cwd());
+        if(!image || !fileIsExist(process.cwd()+'/'+rootPath+image)) {
             Logger.warn("sending status 404.");
             res.statusMessage = "Not Found. User has no image";
             res.status(404).send();
@@ -61,7 +63,8 @@ const setImage = async (req: Request, res: Response): Promise<void> => {
             return;
         }else if(authToken !== user.authToken) {
             Logger.warn("User tried to change other user's image. Sending status 403.");
-            res.status(403).send(" - Can not change another user's profile photo");
+            res.statusMessage = "Forbidden. " + "Can not change another user's profile photo";
+            res.status(403).send();
             return;
         }
         // image file validation
